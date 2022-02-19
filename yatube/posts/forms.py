@@ -1,4 +1,4 @@
-from django.forms import ModelForm, Textarea, Select, ValidationError
+from django.forms import ModelForm, Textarea, Select
 
 from .models import Post, Comment
 
