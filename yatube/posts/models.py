@@ -28,9 +28,9 @@ class Post(models.Model):
     )
     group = models.ForeignKey(
         Group,
+        on_delete=models.SET_NULL,
         blank=True,
         null=True,
-        on_delete=models.SET_NULL,
         related_name='posts'
     )
     image = models.ImageField(
@@ -55,12 +55,28 @@ class Comment(models.Model):
         User,
         on_delete=models.CASCADE,
         related_name='comments',
-        verbose_name='Автор'
+        verbose_name='Комментатор'
     )
     post = models.ForeignKey(
         Post,
         on_delete=models.CASCADE,
         related_name='comments'
     )
+
     class Meta:
         ordering = ['-created']
+
+
+class Follow(models.Model):
+    user = models.ForeignKey(
+        User,
+        on_delete=models.CASCADE,
+        # null=True,
+        related_name='follower'
+    )
+    author = models.ForeignKey(
+        User,
+        on_delete=models.CASCADE,
+        # null=True,
+        related_name='following'
+    )

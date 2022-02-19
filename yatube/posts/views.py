@@ -2,7 +2,7 @@ from django.shortcuts import redirect, render, get_object_or_404
 from django.contrib.auth.decorators import login_required
 from django.views.decorators.cache import cache_page
 
-from .models import Post, Group, User
+from .models import Post, Group, User, Follow
 from .forms import PostForm, CommentForm
 from .utils import paginator_obj
 
@@ -30,10 +30,21 @@ def profile(request, username):
     posts = user.posts.all()
     page_obj = paginator_obj(request, posts)
     count_posts = posts.count()
+
+    # following = False
+    # if request.user.is_authenticated:
+    #     following = Follow.objects.filter(user=request.user, author=user)
+
+    try:
+        if user.following.get(user__pk=request.user.pk):
+            following = True
+    except Exception:
+        following = False
     context = {
         'username': user,
         'page_obj': page_obj,
         'count_posts': count_posts,
+        'following': following,
     }
     return render(request, 'posts/profile.html', context)
 
@@ -95,3 +106,30 @@ def add_comment(request, post_id):
         comment.post = post
         comment.save()
     return redirect('posts:post_detail', post_id=post_id)
+
+
+@login_required
+def follow_index(request):
+    # информация о текущем пользователе доступна в переменной request.user
+    following = Follow.objects.filter(user=request.user)
+    posts = Post.objects.filter(author=following)
+    # Post.objects.filter(author__following__user=request.user)
+    # Post.objects.filter(author__followers__follower__id=self.request.user.id)
+    page_obj = paginator_obj(request, posts)
+    context = {'page_obj': page_obj}
+    return render(request, 'posts/follow.html', context)
+
+
+@login_required
+def profile_follow(request, username):
+    author = get_object_or_404(User, username=username)
+    if author != request.user:
+        Follow.objects.get_or_create(user=request.user, author=author)
+    return redirect('posts:profile', author=author)
+
+
+@login_required
+def profile_unfollow(request, username):
+    author = get_object_or_404(User, username=username)
+    Follow.objects.filter(user=request.user, author=author).delete()
+    return redirect('posts:profile', username=username)
