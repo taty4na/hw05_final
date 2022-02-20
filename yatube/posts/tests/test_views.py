@@ -2,7 +2,7 @@ from django import forms
 from django.test import Client, TestCase
 from django.urls import reverse
 
-from ..models import Group, Post, User
+from ..models import Group, Post, User, Comment
 from ..utils import POSTS_SOW
 
 
@@ -125,3 +125,31 @@ class PostsPagesTests(TestCase):
                         # Проверяет, что поле формы является экземпляром
                         # указанного класса
                         self.assertIsInstance(form_field, expected)
+
+    def test_create_comment(self):
+        """Комментарий появляется на странице поста."""
+        form = {
+            'text': ('Саид, спасибо за ревью! '
+                     'у меня не все пока получается, '
+                     'поэтому очень радуют понятные и логичные замечания, '
+                     'которые действительно помогают разобраться')
+        }
+        comments_count = Comment.objects.count()
+        response = self.authorized_author.post(
+            reverse('posts:add_comment', kwargs={'post_id': self.post.id}),
+            data=form,
+            follow=True,
+        )
+        response = self.authorized_author.get(
+            reverse('posts:post_detail', kwargs={'post_id': self.post.id})
+        )
+        self.assertEqual(Comment.objects.count(), comments_count + 1)
+        test_comment = response.context['comments'][0]
+        self.assertEqual(test_comment, Comment.objects.last())
+
+        response = self.client.post(
+            reverse('posts:add_comment', kwargs={'post_id': self.post.id}),
+            data=form,
+            follow=True,
+        )
+        self.assertRedirects(response, '/auth/login/?next=/posts/13/comment/')

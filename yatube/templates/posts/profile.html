@@ -9,16 +9,16 @@
         <h3>Всего постов: {{ count_posts }}</h3>
 
         {% if following %}
-        <a
-          class="btn btn-lg btn-light"
-          href="{% url 'posts:profile_unfollow' author.username %}" role="button"
-        >
-          Отписаться
-        </a>
+          <a
+            class="btn btn-lg btn-light"
+            href="{% url 'posts:profile_unfollow' username %}" role="button"
+          >
+            Отписаться
+          </a>
         {% else %}
           <a
             class="btn btn-lg btn-primary"
-            href="{% url 'posts:profile_follow' author.username %}" role="button"
+            href="{% url 'posts:profile_follow' username %}" role="button"
           >
             Подписаться
           </a>

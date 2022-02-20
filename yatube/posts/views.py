@@ -7,7 +7,7 @@ from .forms import PostForm, CommentForm
 from .utils import paginator_obj
 
 
-@cache_page(20, key_prefix='index_page')
+# @cache_page(20, key_prefix='index_page')
 def index(request):
     posts = Post.objects.all()
     page_obj = paginator_obj(request, posts)
@@ -30,16 +30,9 @@ def profile(request, username):
     posts = user.posts.all()
     page_obj = paginator_obj(request, posts)
     count_posts = posts.count()
-
-    # following = False
-    # if request.user.is_authenticated:
-    #     following = Follow.objects.filter(user=request.user, author=user)
-
-    try:
-        if user.following.get(user__pk=request.user.pk):
-            following = True
-    except Exception:
-        following = False
+    following = False
+    if request.user.is_authenticated:
+        following = Follow.objects.filter(user=request.user, author=user)
     context = {
         'username': user,
         'page_obj': page_obj,
@@ -110,22 +103,16 @@ def add_comment(request, post_id):
 
 @login_required
 def follow_index(request):
-    # информация о текущем пользователе доступна в переменной request.user
-    following = Follow.objects.filter(user=request.user)
-    posts = Post.objects.filter(author=following)
-    # Post.objects.filter(author__following__user=request.user)
-    # Post.objects.filter(author__followers__follower__id=self.request.user.id)
+    posts = Post.objects.filter(author__following__user=request.user)
     page_obj = paginator_obj(request, posts)
-    context = {'page_obj': page_obj}
-    return render(request, 'posts/follow.html', context)
+    return render(request, 'posts/follow.html', {'page_obj': page_obj})
 
 
 @login_required
 def profile_follow(request, username):
     author = get_object_or_404(User, username=username)
-    if author != request.user:
-        Follow.objects.get_or_create(user=request.user, author=author)
-    return redirect('posts:profile', author=author)
+    Follow.objects.get_or_create(user=request.user, author=author)
+    return redirect('posts:profile', username=username)
 
 
 @login_required
