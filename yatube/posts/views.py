@@ -7,7 +7,7 @@ from .forms import PostForm, CommentForm
 from .utils import paginator_obj
 
 
-# @cache_page(20, key_prefix='index_page')
+@cache_page(20, key_prefix='index_page')
 def index(request):
     posts = Post.objects.all()
     page_obj = paginator_obj(request, posts)

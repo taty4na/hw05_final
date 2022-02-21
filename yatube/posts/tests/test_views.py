@@ -1,11 +1,21 @@
+import shutil
+import tempfile
+
 from django import forms
-from django.test import Client, TestCase
+from django.conf import settings
+from django.core.files.uploadedfile import SimpleUploadedFile
+from django.test import Client, TestCase, override_settings
 from django.urls import reverse
 
 from ..models import Group, Post, User, Comment
 from ..utils import POSTS_SOW
 
 
+# Создаем временную папку для медиа-файлов
+TEMP_MEDIA_ROOT = tempfile.mkdtemp(dir=settings.BASE_DIR)
+
+
+@override_settings(MEDIA_ROOT=TEMP_MEDIA_ROOT)
 class PostsPagesTests(TestCase):
     @classmethod
     def setUpClass(cls):
@@ -22,6 +32,11 @@ class PostsPagesTests(TestCase):
                 text=f'{i} ПамагитеПамагите',
                 group=cls.group,
             )
+
+    @classmethod
+    def tearDownClass(cls):
+        super().tearDownClass()
+        shutil.rmtree(TEMP_MEDIA_ROOT, ignore_errors=True)
 
     def setUp(self):
         self.authorized_author = Client()
@@ -178,3 +193,41 @@ class PostsPagesTests(TestCase):
         )
         response = self.authorized_client.get(reverse('posts:follow_index'))
         self.assertFalse(response.context['page_obj'])
+
+    def test_illustrations(self):
+        """Валидная форма создает запись в Post."""
+        posts_count = Post.objects.count()
+        # Для тестирования загрузки изображений
+        small_gif = (
+            b'\x47\x49\x46\x38\x39\x61\x02\x00'
+            b'\x01\x00\x80\x00\x00\x00\x00\x00'
+            b'\xFF\xFF\xFF\x21\xF9\x04\x00\x00'
+            b'\x00\x00\x00\x2C\x00\x00\x00\x00'
+            b'\x02\x00\x01\x00\x00\x02\x02\x0C'
+            b'\x0A\x00\x3B'
+        )
+        uploaded = SimpleUploadedFile(
+            name='small.gif',
+            content=small_gif,
+            content_type='image/gif'
+        )
+        form_data = {
+            'text': 'Красивая пиксельная картинка',
+            'image': uploaded,
+        }
+        # Отправляем POST-запрос
+        response = self.authorized_client.post(
+            reverse('posts:post_create'),
+            data=form_data,
+            follow=True
+        )
+        # Проверяем, сработал ли редирект
+        self.assertRedirects(response, reverse(
+            'posts:profile',
+            kwargs={'username': 'follower'})
+        )
+        # Проверяем, увеличилось ли число постов
+        self.assertEqual(Post.objects.count(), posts_count + 1)
+        # Проверяем, что создалась запись с заданным слагом
+        self.assertTrue(
+            Post.objects.filter(text='Красивая пиксельная картинка').exists())
