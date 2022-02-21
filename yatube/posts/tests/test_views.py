@@ -26,6 +26,9 @@ class PostsPagesTests(TestCase):
     def setUp(self):
         self.authorized_author = Client()
         self.authorized_author.force_login(self.author_post)
+        authorized_client = User.objects.create_user(username='follower')
+        self.authorized_client = Client()
+        self.authorized_client.force_login(authorized_client)
 
     def test_uses_correct_template(self):
         """URL-адрес использует соответствующий шаблон."""
@@ -144,8 +147,8 @@ class PostsPagesTests(TestCase):
             reverse('posts:post_detail', kwargs={'post_id': self.post.id})
         )
         self.assertEqual(Comment.objects.count(), comments_count + 1)
-        test_comment = response.context['comments'][0]
-        self.assertEqual(test_comment, Comment.objects.last())
+        text_comment = response.context['comments'][0]
+        self.assertEqual(Comment.objects.last(), text_comment)
 
         response = self.client.post(
             reverse('posts:add_comment', kwargs={'post_id': self.post.id}),
@@ -153,3 +156,25 @@ class PostsPagesTests(TestCase):
             follow=True,
         )
         self.assertRedirects(response, '/auth/login/?next=/posts/13/comment/')
+
+    def test_follower(self):
+        """Формирование ленты избранных авторов."""
+        # Без подписки нет ленты избрынных авторов
+        response = self.authorized_client.get(reverse('posts:follow_index'))
+        self.assertFalse(response.context['page_obj'])
+        #  Подписываемся
+        response = self.authorized_client.post(reverse(
+            'posts:profile_follow',
+            kwargs={'username': self.author_post}),
+            follow=True,
+        )
+        response = self.authorized_client.get(reverse('posts:follow_index'))
+        self.assertTrue(response.context['page_obj'])
+        # Дизлайк атписка
+        response = self.authorized_client.post(reverse(
+            'posts:profile_unfollow',
+            kwargs={'username': self.author_post}),
+            follow=True,
+        )
+        response = self.authorized_client.get(reverse('posts:follow_index'))
+        self.assertFalse(response.context['page_obj'])
