@@ -28,13 +28,17 @@ def profile(request, username):
     posts = user.posts.all()
     page_obj = paginator_obj(request, posts)
     count_posts = posts.count()
-    # как и почему работает эта конструкция работает я не знаю
     following = False
     if request.user.is_authenticated and request.user.is_authenticated != user:
-        following = Follow.objects.filter(user=request.user, author=user).exists()
-    # почему не работает просто? if request.user.is_authenticated != user
-    # почему не работает без if я не знаю?
-    # following = Follow.objects.filter(user=request.user, author=user).exists() and (request.user.is_authenticated != user)
+        following = Follow.objects.filter(
+            user=request.user,
+            author=user
+        ).exists()
+    # хотела сделать без if, но не работает, пока не разобралась почему
+    # following = (Follow.objects.filter(
+    #     user=request.user,
+    #     author=user
+    # ).exists() and (request.user.is_authenticated != user))
     context = {
         'username': user,
         'page_obj': page_obj,

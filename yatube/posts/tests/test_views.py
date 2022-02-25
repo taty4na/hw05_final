@@ -146,8 +146,11 @@ class PostsPagesTests(TestCase):
     def test_create_comment(self):
         """Комментарий появляется на странице поста."""
         comments_count = Comment.objects.count()
-        Comment.objects.create(text='Саид, спасибо за ревью!', post=self.post, author=self.author_post)
-
+        Comment.objects.create(
+            text='Саид, спасибо за ревью!',
+            post=self.post,
+            author=self.author_post
+        )
         response = self.authorized_author.get(
             reverse('posts:post_detail', kwargs={'post_id': self.post.id})
         )
@@ -171,24 +174,20 @@ class PostsPagesTests(TestCase):
         self.assertRedirects(response, '/auth/login/?next=/posts/13/comment/')
 
     def test_follower(self):
-        """Формирование ленты избранных авторов."""
-        # Без подписки нет ленты избрынных авторов
-        response = self.authorized_client.get(reverse('posts:follow_index'))
-        self.assertFalse(response.context['page_obj'])
-        #  Подписываемся
-        response = self.authorized_client.post(reverse(
-            'posts:profile_follow',
-            kwargs={'username': self.author_post}),
-            follow=True,
+        """Подписка на авторов и формирование ленты."""
+        Follow.objects.create(
+            user=self.authorized_user,
+            author=self.author_post
         )
         response = self.authorized_client.get(reverse('posts:follow_index'))
         self.assertTrue(response.context['page_obj'])
-        # Дизлайк атписка
-        response = self.authorized_client.post(reverse(
-            'posts:profile_unfollow',
-            kwargs={'username': self.author_post}),
-            follow=True,
-        )
+
+    def test_unfollower(self):
+        """Без подписки лента избранных авторов пустая."""
+        Follow.objects.filter(
+            user=self.authorized_user,
+            author=self.author_post
+        ).delete()
         response = self.authorized_client.get(reverse('posts:follow_index'))
         self.assertFalse(response.context['page_obj'])
 
