@@ -49,7 +49,7 @@ def post_detail(request, post_id):
     author = post.author
     count_posts = author.posts.count()
     comments = post.comments.all()
-    form = CommentForm(request.POST or None)
+    form = CommentForm(request.GET)
     context = {
         'post': post,
         'author': author,
@@ -62,13 +62,12 @@ def post_detail(request, post_id):
 
 @login_required
 def post_create(request):
-    form = PostForm(request.POST or None)
+    form = PostForm(request.POST)
     if form.is_valid():
         form = form.save(commit=False)
         form.author = request.user
         form.save()
         return redirect('posts:profile', username=request.user.username)
-    form = PostForm()
     return render(request, 'posts/create_post.html', {'form': form})
 
 
@@ -83,7 +82,6 @@ def post_edit(request, post_id):
     if form.is_valid():
         form.save()
         return redirect('posts:post_detail', post_id=post_id)
-    form = PostForm(instance=post)
     context = {
         'form': form,
         'is_edit': True,

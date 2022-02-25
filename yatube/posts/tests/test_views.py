@@ -7,9 +7,8 @@ from django.core.files.uploadedfile import SimpleUploadedFile
 from django.test import Client, TestCase, override_settings
 from django.urls import reverse
 
-from ..models import Group, Post, User, Comment
+from ..models import Comment, Follow, Group, Post, User
 from ..utils import POSTS_SOW
-
 
 # Создаем временную папку для медиа-файлов
 TEMP_MEDIA_ROOT = tempfile.mkdtemp(dir=settings.BASE_DIR)
@@ -21,6 +20,7 @@ class PostsPagesTests(TestCase):
     def setUpClass(cls):
         super().setUpClass()
         cls.author_post = User.objects.create_user(username='auth')
+        cls.authorized_user = User.objects.create_user(username='follower')
         cls.group = Group.objects.create(
             title='Тестовая группа',
             slug='test_slug',
@@ -41,9 +41,8 @@ class PostsPagesTests(TestCase):
     def setUp(self):
         self.authorized_author = Client()
         self.authorized_author.force_login(self.author_post)
-        authorized_client = User.objects.create_user(username='follower')
         self.authorized_client = Client()
-        self.authorized_client.force_login(authorized_client)
+        self.authorized_client.force_login(self.authorized_user)
 
     def test_uses_correct_template(self):
         """URL-адрес использует соответствующий шаблон."""
@@ -146,18 +145,9 @@ class PostsPagesTests(TestCase):
 
     def test_create_comment(self):
         """Комментарий появляется на странице поста."""
-        form = {
-            'text': ('Саид, спасибо за ревью! '
-                     'у меня не все пока получается, '
-                     'поэтому очень радуют понятные и логичные замечания, '
-                     'которые действительно помогают разобраться')
-        }
         comments_count = Comment.objects.count()
-        response = self.authorized_author.post(
-            reverse('posts:add_comment', kwargs={'post_id': self.post.id}),
-            data=form,
-            follow=True,
-        )
+        Comment.objects.create(text='Саид, спасибо за ревью!', post=self.post, author=self.author_post)
+
         response = self.authorized_author.get(
             reverse('posts:post_detail', kwargs={'post_id': self.post.id})
         )
@@ -165,6 +155,14 @@ class PostsPagesTests(TestCase):
         text_comment = response.context['comments'][0]
         self.assertEqual(Comment.objects.last(), text_comment)
 
+    def test_add_comment_redirect(self):
+        """После добавления комментария перенаправляет на страницу поста."""
+        form = {
+            'text': ('Саид, спасибо за ревью! '
+                     'у меня не все пока получается, '
+                     'поэтому очень радуют понятные и логичные замечания, '
+                     'которые действительно помогают разобраться')
+        }
         response = self.client.post(
             reverse('posts:add_comment', kwargs={'post_id': self.post.id}),
             data=form,
