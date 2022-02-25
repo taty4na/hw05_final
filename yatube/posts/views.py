@@ -1,13 +1,11 @@
-from django.shortcuts import redirect, render, get_object_or_404
 from django.contrib.auth.decorators import login_required
-# from django.views.decorators.cache import cache_page
+from django.shortcuts import get_object_or_404, redirect, render
 
-from .models import Post, Group, User, Follow
-from .forms import PostForm, CommentForm
+from .forms import CommentForm, PostForm
+from .models import Follow, Group, Post, User
 from .utils import paginator_obj
 
 
-# @cache_page(20, key_prefix='index_page')
 def index(request):
     posts = Post.objects.all()
     page_obj = paginator_obj(request, posts)
@@ -30,9 +28,13 @@ def profile(request, username):
     posts = user.posts.all()
     page_obj = paginator_obj(request, posts)
     count_posts = posts.count()
+    # как и почему работает эта конструкция работает я не знаю
     following = False
-    if request.user.is_authenticated:
-        following = Follow.objects.filter(user=request.user, author=user)
+    if request.user.is_authenticated and request.user.is_authenticated != user:
+        following = Follow.objects.filter(user=request.user, author=user).exists()
+    # почему не работает просто? if request.user.is_authenticated != user
+    # почему не работает без if я не знаю?
+    # following = Follow.objects.filter(user=request.user, author=user).exists() and (request.user.is_authenticated != user)
     context = {
         'username': user,
         'page_obj': page_obj,

@@ -1,6 +1,6 @@
-from django.forms import ModelForm, Textarea, Select
+from django.forms import ModelForm, Select, Textarea
 
-from .models import Post, Comment
+from .models import Comment, Post
 
 
 class PostForm(ModelForm):
@@ -26,7 +26,7 @@ class PostForm(ModelForm):
 class CommentForm(ModelForm):
     class Meta:
         model = Comment
-        fields = {'text'}
+        fields = ['text']
         widgets = {
             "text": Textarea(attrs={
                 'class': 'form-control',

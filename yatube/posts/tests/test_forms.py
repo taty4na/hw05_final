@@ -5,7 +5,6 @@ from django.conf import settings
 from django.test import Client, TestCase, override_settings
 from django.urls import reverse
 
-
 from ..forms import PostForm
 from ..models import Group, Post, User
 
