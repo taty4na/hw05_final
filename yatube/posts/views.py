@@ -29,16 +29,12 @@ def profile(request, username):
     page_obj = paginator_obj(request, posts)
     count_posts = posts.count()
     following = False
-    if request.user.is_authenticated and request.user.is_authenticated != user:
-        following = Follow.objects.filter(
-            user=request.user,
-            author=user
-        ).exists()
-    # хотела сделать без if, но не работает, пока не разобралась почему
-    # following = (Follow.objects.filter(
-    #     user=request.user,
-    #     author=user
-    # ).exists() and (request.user.is_authenticated != user))
+    # просто поменять местами чтобы работало... рукалицо...
+    # теперь буду знать, и логика в этом есть. спасибо, Саид)))
+    following = (request.user.is_authenticated and Follow.objects.filter(
+        user=request.user,
+        author=user).exists()
+    )
     context = {
         'username': user,
         'page_obj': page_obj,
@@ -53,20 +49,19 @@ def post_detail(request, post_id):
     author = post.author
     count_posts = author.posts.count()
     comments = post.comments.all()
-    form = CommentForm(request.GET)
     context = {
         'post': post,
         'author': author,
         'count_posts': count_posts,
         'comments': comments,
-        'form': form,
+        'form': CommentForm(),
     }
     return render(request, 'posts/post_detail.html', context)
 
 
 @login_required
 def post_create(request):
-    form = PostForm(request.POST)
+    form = PostForm(request.POST or None, request.FILES or None)
     if form.is_valid():
         form = form.save(commit=False)
         form.author = request.user

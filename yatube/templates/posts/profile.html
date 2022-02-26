@@ -8,21 +8,22 @@
         <h1>Все посты пользователя {{ username }}</h1>
         <h3>Всего постов: {{ count_posts }}</h3>
 
-        {% comment %} проверка что нельзя подписаться на себя - во views {% endcomment %}
-        {% if following %}
-          <a
-            class="btn btn-lg btn-light"
-            href="{% url 'posts:profile_unfollow' username %}" role="button"
-          >
-            Отписаться
-          </a>
-        {% else %}
-          <a
-            class="btn btn-lg btn-primary"
-            href="{% url 'posts:profile_follow' username %}" role="button"
-          >
-            Подписаться
-          </a>
+        {% if request.user != username %}
+          {% if following %}
+            <a
+              class="btn btn-lg btn-light"
+              href="{% url 'posts:profile_unfollow' username %}" role="button"
+            >
+              Отписаться
+            </a>
+          {% else %}
+            <a
+              class="btn btn-lg btn-primary"
+              href="{% url 'posts:profile_follow' username %}" role="button"
+            >
+              Подписаться
+            </a>
+          {% endif %}
         {% endif %}
 
         {% for post in page_obj %}   
