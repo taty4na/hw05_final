@@ -1,3 +1,48 @@
-# hw05_final
+# Yatube
 
-[![CI](https://github.com/yandex-praktikum/hw05_final/actions/workflows/python-app.yml/badge.svg?branch=master)](https://github.com/yandex-praktikum/hw05_final/actions/workflows/python-app.yml)
+Социальная сеть Yatube.
+
+Сервис можно использовать для программного доступа к данным и работы с социальной сетью.
+У всех пользователей сервиса есть доступ для просмотра постов. Для подписки на понравившегося автора, или добавления своего поста необходимо зарегистрироваться.
+Данные предоставлены в формате JSON, которые можно программно собирать, измерять и анализировать.
+
+## Как запустить проект:
+
+Клонировать репозиторий и перейти в него в командной строке:
+
+```
+git clone git@github.com:taty4na/hw05_final.git
+```
+```
+cd hw05_final
+```
+
+Cоздать и активировать виртуальное окружение:
+```
+python3 -m venv venv
+```
+```
+source venv/bin/activate
+```
+
+Установить зависимости из файла requirements.txt:
+```
+python3 -m pip install --upgrade pip
+```
+```
+pip install -r requirements.txt
+```
+
+Выполнить миграции:
+```
+python3 manage.py migrate
+```
+
+Запустить проект:
+```
+python3 manage.py runserver
+```
+
+
+
+## ***Автор Татьяна***
